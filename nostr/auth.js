@@ -3,6 +3,29 @@ import * as utils from './utils.js';
 
 const RELAY_URL = 'wss://nostrue.com'     // can be replaced with other relay urls
 
+export function reqProfileData(relay, pubKey){
+
+    relay.send(JSON.stringify(['REQ', pubKey, {authors: [pubKey], kinds: [0]}]))
+    
+    setTimeout(() => {
+        relay.close()
+    }, 5000)
+
+    relay.on('message', (message) => {
+        const msg = JSON.parse(message)
+        if (msg[0] == 'EVENT', msg[1] == pubKey){
+            const data = JSON.parse(msg[2]['content'])
+            return {
+                 name: data['name'],
+                 bio: data['about'],
+                 picture: data['picture']
+            };
+        } else {
+            return null;
+        }
+    })
+}
+
 export function register(name, bio, picture){
     try {
         const [privKey, pubKey] = utils.generateKeyPair()
@@ -48,10 +71,17 @@ export function login(privKey, pubKey){
         relay.on('message', (message) => {
             const msg = JSON.parse(message)
             if (msg[0] == 'OK' && msg[1] == loginEvent.id && msg[2] == true){
-                return true;
-            } else {
-                return false
-            }
+
+                const userData = reqProfileData(relay, pubKey)
+
+                if (userData != null || userData != undefined){
+                    
+                    return userData;
+
+                } else {
+                    return null
+                }
+            } 
         })
     }   catch (err) {
         console.error(err)
