@@ -25,3 +25,20 @@ export function generateKeyPair(){
     const pubKey = Buffer.from(schnorr.getPublicKey(privKey)).toString('hex')
     return {privateKey : privKey, publicKey: pubKey}
 }
+
+export function createEvent(privKey, pubKey, kind, tags, content){
+        const event = {
+            pubkey: pubKey,
+            created_at: Math.floor(Date.now() / 1000),
+            kind : kind,
+            tags: tags,
+            content: content
+        }
+
+        const sigAndId = eventIdAndSig(event, privKey)
+        event.id = sigAndId.id
+        event.sig = sigAndId.sig
+
+        return event
+        
+}
